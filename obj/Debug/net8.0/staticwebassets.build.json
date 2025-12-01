@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "USS7vx9aCSUU13EPaApy0O3NGAgm4bxM8kTCpYMoxRE=",
+  "Source": "PainPredictor.Api",
+  "BasePath": "_content/PainPredictor.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
