@@ -1,7 +1,12 @@
-namespace Petzy.FrameReceiver.Models;
+using System;
+using Petzy.FrameReceiver.DTOs.Analysis;
 
-public class FrameData
+namespace Petzy.FrameReceiver.Models
 {
-    public byte[] Image { get; set; } = null!;
-    public DateTime Timestamp { get; set; }
+    public class FrameData
+    {
+        public byte[] Image { get; set; } = null!;
+        public DateTime Timestamp { get; set; }
+        public FrameAnalysisResponse? Analysis { get; set; } // NOVO
+    }
 }

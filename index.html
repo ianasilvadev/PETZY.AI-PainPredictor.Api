@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Petzy — Análise de Dor em Animais</title>
+    <style>
+        :root {
+            --bg-app: #0f0d1a;
+            --bg-panel: #16122b;
+            --bg-card: #1e1938;
+            --bg-input: #0f0d1a;
+            --accent-purple: #7c5cbf;
+            --accent-purple-light: #a47de8;
+            --accent-orange: #f97316;
+            --accent-orange-light: #fdba74;
+            --border: rgba(124, 92, 191, 0.25);
+            --border-strong: rgba(124, 92, 191, 0.5);
+            --text-primary: #ede9fe;
+            --text-secondary: #9d94b8;
+            --text-muted: #5b5278;
+            --status-normal: #22c55e;
+            --status-warn: #eab308;
+            --status-crit: #ef4444;
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-app);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        /* ── Header ── */
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .app-logo {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, #7c5cbf 0%, #f97316 100%);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; line-height: 1;
+        }
+        .app-title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+        .app-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 1px; }
+        .app-badge {
+            margin-left: auto;
+            background: rgba(124, 92, 191, 0.18);
+            border: 1px solid var(--border);
+            color: var(--accent-purple-light);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        /* ── Layout ── */
+        .container {
+            max-width: 1320px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+        }
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        /* ── Panels ── */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+        }
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        /* ── Video box ── */
+        .video-wrapper {
+            position: relative;
+            background: #080611;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            width: 100%;
+            height: 420px;
+        }
+        .video-wrapper video,
+        .video-wrapper canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: contain;
+            border-radius: 0;
+            display: block;
+        }
+        .video-wrapper canvas { pointer-events: none; }
+
+        .video-idle {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-muted);
+            font-size: 14px;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            background: #080611;
+        }
+        .video-idle.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
+        .video-idle svg { opacity: 0.35; }
+
+        /* ── Controls ── */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        button, .file-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.15s, transform 0.12s;
+            white-space: nowrap;
+        }
+        button:active, .file-label:active { transform: scale(0.97); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7c5cbf, #a47de8);
+            color: #fff;
+        }
+        .btn-orange {
+            background: linear-gradient(135deg, #c2540a, #f97316);
+            color: #fff;
+        }
+        .btn-ghost {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239,68,68,0.35);
+            color: #f87171;
+        }
+        .btn-icon { width: 16px; height: 16px; flex-shrink: 0; }
+        .icon-sm  { width: 14px; height: 14px; flex-shrink: 0; }
+        .species-icon svg { width: 20px; height: 20px; }
+
+        input[type="file"] { display: none; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+            padding: 9px 14px;
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            flex-shrink: 0;
+            transition: background 0.3s;
+        }
+        .status-dot.active { background: var(--status-normal); box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+        .status-dot.loading { background: var(--accent-orange); animation: pulse 1s ease infinite; }
+        .status-dot.error { background: var(--status-crit); }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .spinner {
+            width: 13px; height: 13px;
+            border: 2px solid rgba(164,125,232,0.3);
+            border-top-color: var(--accent-purple-light);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Analysis panel ── */
+        .analysis-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Risk score card */
+        .risk-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 18px;
+        }
+        .risk-card-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .risk-empty {
+            font-size: 13px;
+            color: var(--text-muted);
+            padding: 10px 0;
+        }
+
+        .risk-species {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .species-icon {
+            width: 36px; height: 36px;
+            background: rgba(124,92,191,0.18);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .species-name { font-size: 15px; font-weight: 600; }
+        .species-sub  { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+        /* Score bar */
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .score-label { font-size: 12px; color: var(--text-secondary); }
+        .score-value { font-size: 20px; font-weight: 700; }
+        .score-bar-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.5s ease, background 0.5s ease;
+        }
+
+        /* Risk badge */
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        .risk-badge.normal  { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+        .risk-badge.atencao { background: rgba(234,179,8,0.15);  color: #fde047; border: 1px solid rgba(234,179,8,0.3); }
+        .risk-badge.critico { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+        .meta-row {
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 10px;
+        }
+
+        /* Settings card */
+        .settings-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .setting-row:last-child { margin-bottom: 0; }
+        .setting-label { font-size: 12px; color: var(--text-secondary); flex: 1; }
+        .setting-input {
+            width: 88px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+            padding: 6px 10px;
+            text-align: right;
+        }
+        .setting-input:focus { outline: none; border-color: var(--border-strong); }
+
+        .endpoint-badge {
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 9px;
+            word-break: break-all;
+        }
+
+        /* Quick action btns */
+        .action-row {
+            display: flex;
+            gap: 10px;
+        }
+        .action-row button { flex: 1; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="app-header">
+    <div class="app-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="6" cy="7" rx="1.8" ry="2.5"/><ellipse cx="10.5" cy="4.5" rx="1.5" ry="2.2"/>
+            <ellipse cx="15" cy="4.5" rx="1.5" ry="2.2"/><ellipse cx="19" cy="7" rx="1.8" ry="2.5"/>
+            <path d="M12 10c-4 0-7 2.5-6 6.5.5 2 2 3.5 4 3.5h4c2 0 3.5-1.5 4-3.5 1-4-2-6.5-6-6.5z"/>
+        </svg>
+    </div>
+    <div>
+        <div class="app-title">Petzy</div>
+        <div class="app-subtitle">Análise de dor em animais</div>
+    </div>
+    <div class="app-badge">petzy AI</div>
+</div>
+
+<!-- Main layout -->
+<div class="container">
+
+    <!-- ── Video panel ── -->
+    <div class="panel">
+        <div class="panel-title">Monitoramento ao vivo</div>
+
+        <div class="video-wrapper" id="videoWrapper">
+            <video id="video" autoplay playsinline muted></video>
+            <canvas id="overlayCanvas"></canvas>
+            <div class="video-idle" id="videoIdle">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <rect x="2" y="7" width="20" height="12" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><circle cx="12" cy="13" r="3"/>
+                </svg>
+                Aguardando câmera ou vídeo...
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" id="startCameraBtn">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+                </svg> Iniciar câmera
+            </button>
+            <label class="file-label btn-ghost" for="videoUpload">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg> Carregar vídeo
+            </label>
+            <input type="file" id="videoUpload" accept="video/mp4,video/webm,video/ogg">
+            <button class="btn-danger" id="stopBtn">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                </svg> Parar
+            </button>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusMsg">Aguardando início...</span>
+        </div>
+    </div>
+
+    <!-- ── Analysis panel ── -->
+    <div class="analysis-panel">
+
+        <!-- Action buttons -->
+        <div class="action-row">
+            <button class="btn-ghost" id="toggleAutoBtn">
+                <svg class="btn-icon" id="toggleIcon" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
+                </svg>
+                <span id="toggleLabel">Pausar análise</span>
+            </button>
+            <button class="btn-orange" id="captureNowBtn">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                </svg> Capturar
+            </button>
+        </div>
+
+        <!-- Result card -->
+        <div class="risk-card" id="analysisResult">
+            <div class="risk-card-label">Última detecção</div>
+            <div class="risk-empty">Nenhuma análise ainda.</div>
+        </div>
+
+        <!-- Settings card -->
+        <div class="settings-card">
+            <div class="panel-title" style="margin-bottom:12px;">Configurações</div>
+
+            <div class="setting-row">
+                <span class="setting-label">Intervalo de captura</span>
+                <input type="number" id="intervalInput" class="setting-input" value="1000" step="100">
+                <span style="font-size:11px;color:var(--text-muted)">ms</span>
+            </div>
+
+            <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:6px;">
+                <span class="setting-label">Endpoint</span>
+                <div class="endpoint-badge">http://localhost:5214/frames</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const BACKEND_URL = 'http://localhost:5214/frames';
+    let mediaStream = null;
+    let videoElement = document.getElementById('video');
+    let overlayCanvas = document.getElementById('overlayCanvas');
+    let ctx = overlayCanvas.getContext('2d');
+    let autoAnalysis = true;
+    let intervalMs = 1000;
+    let intervalTimer = null;
+    let currentVideoSource = null;
+
+    const startCameraBtn  = document.getElementById('startCameraBtn');
+    const videoUpload     = document.getElementById('videoUpload');
+    const stopBtn         = document.getElementById('stopBtn');
+    const toggleAutoBtn   = document.getElementById('toggleAutoBtn');
+    const captureNowBtn   = document.getElementById('captureNowBtn');
+    const intervalInput   = document.getElementById('intervalInput');
+    const statusMsg       = document.getElementById('statusMsg');
+    const statusDot       = document.getElementById('statusDot');
+    const analysisDiv     = document.getElementById('analysisResult');
+    const videoIdle       = document.getElementById('videoIdle');
+
+    function updateStatus(text, mode = 'idle') {
+        statusMsg.textContent = text;
+        statusDot.className = 'status-dot';
+        if (mode === 'active')  statusDot.classList.add('active');
+        if (mode === 'loading') statusDot.classList.add('loading');
+        if (mode === 'error')   statusDot.classList.add('error');
+    }
+
+    function setIdleOverlay(visible) {
+        if (visible) {
+            videoIdle.classList.remove('hidden');
+        } else {
+            videoIdle.classList.add('hidden');
+        }
+    }
+
+    function drawBoundingBox(bbox, label) {
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        if (!bbox || bbox.length !== 4) return;
+        let [x, y, w, h] = bbox;
+        if (x === 0 && y === 0 && w === overlayCanvas.width && h === overlayCanvas.height) return;
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 2.5;
+        ctx.fillStyle = 'rgba(249,115,22,0.12)';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeRect(x, y, w, h);
+        if (label) {
+            ctx.font = 'bold 13px "Segoe UI"';
+            const tw = ctx.measureText(label).width + 12;
+            ctx.fillStyle = '#f97316';
+            ctx.fillRect(x, y - 22, tw, 22);
+            ctx.fillStyle = '#fff';
+            ctx.fillText(label, x + 6, y - 6);
+        }
+    }
+
+    function resizeCanvas() {
+        if (videoElement.videoWidth && videoElement.videoHeight) {
+            overlayCanvas.width  = videoElement.videoWidth;
+            overlayCanvas.height = videoElement.videoHeight;
+        }
+    }
+
+    async function sendFrameToBackend() {
+        if (!videoElement.videoWidth || !videoElement.videoHeight) return;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width  = videoElement.videoWidth;
+        tempCanvas.height = videoElement.videoHeight;
+        tempCanvas.getContext('2d').drawImage(videoElement, 0, 0);
+        const blob = await new Promise(r => tempCanvas.toBlob(r, 'image/jpeg', 0.8));
+        const formData = new FormData();
+        formData.append('Frame', blob, 'frame.jpg');
+        formData.append('Timestamp', new Date().toISOString());
+        try {
+            updateStatus('Enviando frame...', 'loading');
+            const response = await fetch(BACKEND_URL, { method: 'POST', body: formData });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            updateStatus('Análise recebida', 'active');
+            displayAnalysis(data);
+            if (data.analysis?.animals?.length > 0) {
+                const a = data.analysis.animals[0];
+                drawBoundingBox(a.bbox, `${a.species} • ${(a.riskScore * 100).toFixed(1)}%`);
+            } else {
+                drawBoundingBox(null);
+            }
+        } catch (err) {
+            updateStatus('Erro: ' + err.message, 'error');
+            drawBoundingBox(null);
+            analysisDiv.innerHTML = `
+                <div class="risk-card-label">Última detecção</div>
+                <div class="risk-empty" style="color:#f87171;">Não foi possível contactar o backend.<br><small style="color:var(--text-muted)">${BACKEND_URL}</small></div>`;
+        }
+    }
+
+    function displayAnalysis(data) {
+        const analysis = data?.analysis;
+        if (!analysis?.animals?.length) {
+            analysisDiv.innerHTML = `<div class="risk-card-label">Última detecção</div><div class="risk-empty">Nenhum animal detectado.</div>`;
+            return;
+        }
+        const a = analysis.animals[0];
+        const score = (a.riskScore * 100).toFixed(1);
+        const lvl   = a.riskLevel || 'normal';
+        const barColor = lvl === 'normal' ? '#22c55e' : (lvl === 'atencao' ? '#eab308' : '#ef4444');
+        const ts = analysis.processedAt ? new Date(analysis.processedAt).toLocaleTimeString() : '';
+
+        const isCat = (a.species || '').toLowerCase().includes('cat');
+        const speciesSvg = isCat
+            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l2-4 3 3h6l3-3 2 4"/><path d="M4 6C2 8 2 11 3 13c1 3 4 5 9 5s8-2 9-5c1-2 1-5-1-7H4z"/><circle cx="9" cy="13" r="0.8" fill="currentColor"/><circle cx="15" cy="13" r="0.8" fill="currentColor"/><path d="M12 15v1.5"/></svg>`
+            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5.5C10 4.1 8.9 3 7.5 3S5 4.1 5 5.5v1C3.3 7.6 2 9.7 2 12v4a2 2 0 0 0 2 2h1v1a1 1 0 0 0 2 0v-1h6v1a1 1 0 0 0 2 0v-1h1a2 2 0 0 0 2-2v-4c0-2.3-1.3-4.4-3-5.5v-1C15 4.1 13.9 3 12.5 3S10 4.1 10 5.5z"/><circle cx="8" cy="13" r="0.8" fill="currentColor"/><circle cx="16" cy="13" r="0.8" fill="currentColor"/></svg>`;
+
+        const badgeIcon = lvl === 'normal'
+            ? `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>`
+            : lvl === 'atencao'
+            ? `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+            : `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+
+        const lvlLabel = lvl === 'normal' ? 'Normal' : (lvl === 'atencao' ? 'Atenção' : 'Crítico');
+
+        analysisDiv.innerHTML = `
+            <div class="risk-card-label">Última detecção</div>
+            <div class="risk-species">
+                <div class="species-icon" style="color:var(--accent-purple-light)">${speciesSvg}</div>
+                <div>
+                    <div class="species-name">${a.species === 'desconhecido' ? 'Não identificado' : a.species}</div>
+                    <div class="species-sub">Animal detectado</div>
+                </div>
+            </div>
+            <div class="score-row">
+                <span class="score-label">Score de dor</span>
+                <span class="score-value" style="color:${barColor}">${score}%</span>
+            </div>
+            <div class="score-bar-track">
+                <div class="score-bar-fill" style="width:${score}%;background:${barColor}"></div>
+            </div>
+            <div><span class="risk-badge ${lvl}">${badgeIcon} ${lvlLabel}</span></div>
+            ${ts ? `<div class="meta-row">Processado às ${ts}</div>` : ''}`;
+    }
+
+    function startAutoAnalysis() {
+        if (intervalTimer) clearInterval(intervalTimer);
+        if (!autoAnalysis) return;
+        intervalTimer = setInterval(() => {
+            if (videoElement.readyState >= 2 && videoElement.videoWidth) sendFrameToBackend();
+        }, intervalMs);
+    }
+    function stopAutoAnalysis() {
+        clearInterval(intervalTimer);
+        intervalTimer = null;
+    }
+    const pauseIcon = `<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>`;
+    const playIcon  = `<polygon points="5,3 19,12 5,21"/>`;
+
+    function setAutoMode(enabled) {
+        autoAnalysis = enabled;
+        const icon  = document.getElementById('toggleIcon');
+        const label = document.getElementById('toggleLabel');
+        if (enabled) {
+            icon.innerHTML = pauseIcon;
+            label.textContent = 'Pausar análise';
+            toggleAutoBtn.className = 'btn-ghost';
+            startAutoAnalysis();
+        } else {
+            icon.innerHTML = playIcon;
+            label.textContent = 'Retomar análise';
+            toggleAutoBtn.className = 'btn-primary';
+            stopAutoAnalysis();
+        }
+    }
+
+    async function initCamera() {
+        stopAll();
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            mediaStream = stream;
+            videoElement.srcObject = stream;
+            await videoElement.play();
+            currentVideoSource = 'camera';
+            setIdleOverlay(false);
+            updateStatus('Câmera ativa — análise em andamento', 'active');
+            const onReady = () => { resizeCanvas(); startAutoAnalysis(); };
+            if (videoElement.readyState >= 1) {
+                onReady();
+            } else {
+                videoElement.addEventListener('loadedmetadata', onReady, { once: true });
+            }
+        } catch (err) {
+            updateStatus('Erro ao acessar câmera: ' + err.message, 'error');
+        }
+    }
+
+    function loadVideo(file) {
+        if (!file) return;
+        stopAll();
+        videoElement.src = URL.createObjectURL(file);
+        videoElement.addEventListener('loadedmetadata', () => {
+            resizeCanvas();
+            videoElement.play();
+            currentVideoSource = 'file';
+            setIdleOverlay(false);
+            updateStatus('Vídeo carregado — análise em andamento', 'active');
+            startAutoAnalysis();
+        }, { once: true });
+        videoElement.onended = () => {
+            updateStatus('Vídeo finalizado', 'idle');
+            stopAutoAnalysis();
+        };
+    }
+
+    function stopAll() {
+        stopAutoAnalysis();
+        if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+        videoElement.srcObject = null;
+        if (videoElement.src?.startsWith('blob:')) URL.revokeObjectURL(videoElement.src);
+        videoElement.src = '';
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        currentVideoSource = null;
+        setIdleOverlay(true);
+        updateStatus('Parado', 'idle');
+    }
+
+    startCameraBtn.onclick  = initCamera;
+    stopBtn.onclick         = stopAll;
+    videoUpload.onchange    = e => { if (e.target.files.length) loadVideo(e.target.files[0]); };
+    toggleAutoBtn.onclick   = () => setAutoMode(!autoAnalysis);
+    captureNowBtn.onclick   = sendFrameToBackend;
+    intervalInput.onchange  = () => {
+        intervalMs = parseInt(intervalInput.value, 10) || 1000;
+        if (autoAnalysis) { stopAutoAnalysis(); startAutoAnalysis(); }
+    };
+    videoElement.addEventListener('resize', resizeCanvas);
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    updateStatus('Pronto — aguardando câmera ou vídeo', 'idle');
+</script>
+</body>
+</html>

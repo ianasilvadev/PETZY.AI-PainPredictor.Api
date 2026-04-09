@@ -1,79 +1,121 @@
 using Microsoft.AspNetCore.Mvc;
 using Petzy.FrameReceiver.DTOs;
-using Petzy.FrameReceiver.Storage;
 using Petzy.FrameReceiver.Models;
+using Petzy.FrameReceiver.Services;
+using Petzy.FrameReceiver.Storage;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace Petzy.FrameReceiver.Controllers;
-
-[ApiController]
-[Route("frames")]
-public class FramesController : ControllerBase
+namespace Petzy.FrameReceiver.Controllers
 {
-    [HttpPost]
-    public async Task<IActionResult> ReceiveFrame([FromForm] FrameUploadRequest request)
+    [ApiController]
+    [Route("frames")]
+    public class FramesController : ControllerBase
     {
-        if (request.Frame == null || request.Frame.Length == 0)
-            return BadRequest("Frame inválido");
+        private readonly IFrameAnalysisService _analysisService;
 
-        if (request.Frame.Length > 1_000_000)
-            return BadRequest("Frame muito grande");
-
-        var frameId = Guid.NewGuid().ToString();
-
-        using var memoryStream = new MemoryStream();
-        await request.Frame.CopyToAsync(memoryStream);
-        var bytes = memoryStream.ToArray();
-
-        FrameStore.Frames[frameId] = new FrameData
+        public FramesController(IFrameAnalysisService analysisService)
         {
-            Image = bytes,
-            Timestamp = request.Timestamp ?? DateTime.UtcNow
-        };
+            _analysisService = analysisService;
+        }
 
-        Console.WriteLine($"Frame recebido");
-        Console.WriteLine($"Tamanho: {bytes.Length} bytes");
-        Console.WriteLine($"Timestamp salvo: {FrameStore.Frames[frameId].Timestamp}");
-
-        return Ok(new
+        [HttpPost]
+        public async Task<IActionResult> ReceiveFrame([FromForm] FrameUploadRequest request)
         {
-            message = "Frame recebido com sucesso",
-            frameId = frameId
-        });
-    }
+            if (request.Frame == null || request.Frame.Length == 0)
+                return BadRequest("Frame inválido");
 
-    [HttpGet("{id}")]
-    public IActionResult GetFrame(string id)
-    {
-        if (!FrameStore.Frames.TryGetValue(id, out var frame))
-            return NotFound("Frame não encontrado");
+            if (request.Frame.Length > 1_000_000)
+                return BadRequest("Frame muito grande");
 
-        return File(frame.Image, "image/jpeg");
-    }
+            var frameId = Guid.NewGuid().ToString();
 
-    [HttpGet("latest")]
-    public IActionResult GetLatestFrame()
-    {
-        if (!FrameStore.Frames.Any())
-            return NotFound("Nenhum frame disponível");
+            using var memoryStream = new MemoryStream();
+            await request.Frame.CopyToAsync(memoryStream);
+            var bytes = memoryStream.ToArray();
 
-        var last = FrameStore.Frames.Last();
+            // Chamar serviço de IA
+            var analysis = await _analysisService.AnalyzeFrameAsync(bytes);
 
-        return File(last.Value.Image, "image/jpeg");
-    }
-
-    [HttpGet("by-date")]
-    public IActionResult GetAllFramesByDate(DateTime date)
-    {
-        var framesDate = FrameStore.Frames
-            .Where(f => f.Value.Timestamp.Date == date.Date)
-            .Select(f => new
+            // Salvar frame com análise (pode ser nula se o serviço estiver offline)
+            FrameStore.Frames[frameId] = new FrameData
             {
-                id = f.Key,
-                timestamp = f.Value.Timestamp,
-                url = $"{Request.Scheme}://{Request.Host}/frames/{f.Key}"
-            })
-            .ToList();
+                Image = bytes,
+                Timestamp = request.Timestamp ?? DateTime.UtcNow,
+                Analysis = analysis
+            };
 
-        return Ok(framesDate);
+            Console.WriteLine($"Frame recebido: {frameId}");
+            Console.WriteLine($"Tamanho: {bytes.Length} bytes");
+            Console.WriteLine($"Análise: {(analysis == null ? "não obtida" : "OK")}");
+
+            // Retornar o ID e a análise (se houver)
+            return Ok(new
+            {
+                frameId,
+                timestamp = FrameStore.Frames[frameId].Timestamp,
+                analysis
+            });
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetFrame(string id)
+        {
+            if (!FrameStore.Frames.TryGetValue(id, out var frame))
+                return NotFound("Frame não encontrado");
+
+            // Retorna os metadados + imagem em base64
+            return Ok(new
+            {
+                id,  // o parâmetro da rota é o ID
+                frame.Timestamp,
+                frame.Analysis,
+                ImageBase64 = Convert.ToBase64String(frame.Image)
+            });
+        }
+
+        [HttpGet("latest")]
+        public IActionResult GetLatestFrame()
+        {
+            if (!FrameStore.Frames.Any())
+                return NotFound("Nenhum frame disponível");
+
+            var last = FrameStore.Frames.Last(); // KeyValuePair<string, FrameData>
+            return Ok(new
+            {
+                id = last.Key,
+                last.Value.Timestamp,
+                last.Value.Analysis,
+                ImageBase64 = Convert.ToBase64String(last.Value.Image)
+            });
+        }
+
+        [HttpGet("by-date")]
+        public IActionResult GetAllFramesByDate(DateTime date)
+        {
+            var framesDate = FrameStore.Frames
+                .Where(f => f.Value.Timestamp.Date == date.Date)
+                .Select(f => new
+                {
+                    id = f.Key,
+                    timestamp = f.Value.Timestamp,
+                    analysis = f.Value.Analysis,
+                    url = $"{Request.Scheme}://{Request.Host}/frames/{f.Key}"
+                })
+                .ToList();
+
+            return Ok(framesDate);
+        }
+
+        // Opcional: endpoint para obter apenas a imagem (sem JSON)
+        [HttpGet("{id}/image")]
+        public IActionResult GetFrameImage(string id)
+        {
+            if (!FrameStore.Frames.TryGetValue(id, out var frame))
+                return NotFound("Frame não encontrado");
+
+            return File(frame.Image, "image/jpeg");
+        }
     }
 }
