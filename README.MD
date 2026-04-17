@@ -5,7 +5,7 @@ Este é o backend em .NET que recebe frames de vídeo, envia para um serviço de
 
 ## 📋 Pré‑requisitos
 
-- [.NET SDK 8.0+](https://dotnet.microsoft.com/download) (recomendado 8.0)
+- [.NET SDK 10.0+](https://dotnet.microsoft.com/download) (recomendado 10.0)
 - Serviço Python de análise rodando em `http://localhost:8000/analyze-frame`  
   (exemplo: modelo de detecção de dor em animais)
 - Opcional: `curl` para testes manuais
