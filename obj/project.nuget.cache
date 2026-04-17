@@ -12,15 +12,5 @@
     "/home/mitty/.nuget/packages/swashbuckle.aspnetcore.swaggergen/10.1.7/swashbuckle.aspnetcore.swaggergen.10.1.7.nupkg.sha512",
     "/home/mitty/.nuget/packages/swashbuckle.aspnetcore.swaggerui/10.1.7/swashbuckle.aspnetcore.swaggerui.10.1.7.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "Undefined",
-      "level": "Warning",
-      "message": "Problem reading the cache file /home/mitty/Downloads/Petzy.FrameReceiver/obj/project.nuget.cache : '{' is invalid after a single JSON value. Expected end of data. Path: $ | LineNumber: 15 | BytePositionInLine: 1.",
-      "projectPath": "/home/mitty/Downloads/Petzy.FrameReceiver/Petzy.FrameReceiver.csproj",
-      "warningLevel": 1,
-      "filePath": "/home/mitty/Downloads/Petzy.FrameReceiver/Petzy.FrameReceiver.csproj",
-      "targetGraphs": []
-    }
-  ]
+  "logs": []
 }

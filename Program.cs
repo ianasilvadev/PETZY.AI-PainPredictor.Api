@@ -44,7 +44,7 @@ if (app.Environment.IsDevelopment())
 // 🔹 Usar CORS depois do builder.Build()
 app.UseCors("AllowAll");
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();

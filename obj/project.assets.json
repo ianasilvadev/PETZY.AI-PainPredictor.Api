@@ -986,13 +986,5 @@
         }
       }
     }
-  },
-  "logs": [
-    {
-      "code": "Undefined",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Problem reading the cache file /home/mitty/Downloads/Petzy.FrameReceiver/obj/project.nuget.cache : '{' is invalid after a single JSON value. Expected end of data. Path: $ | LineNumber: 15 | BytePositionInLine: 1."
-    }
-  ]
+  }
 }
