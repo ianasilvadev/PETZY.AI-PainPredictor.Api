@@ -44,7 +44,6 @@
         padding: 24px;
       }
 
-      /* ── Header ── */
       .app-header {
         display: flex;
         align-items: center;
@@ -85,7 +84,6 @@
         text-transform: uppercase;
       }
 
-      /* ── Layout ── */
       .container {
         max-width: 1320px;
         margin: 0 auto;
@@ -99,7 +97,6 @@
         }
       }
 
-      /* ── Panels ── */
       .panel {
         background: var(--bg-panel);
         border: 1px solid var(--border);
@@ -115,7 +112,6 @@
         margin-bottom: 16px;
       }
 
-      /* ── Video box ── */
       .video-wrapper {
         position: relative;
         background: #080611;
@@ -160,11 +156,7 @@
         pointer-events: none;
         visibility: hidden;
       }
-      .video-idle svg {
-        opacity: 0.35;
-      }
 
-      /* ── Controls ── */
       .controls {
         display: flex;
         flex-wrap: wrap;
@@ -216,21 +208,11 @@
         height: 16px;
         flex-shrink: 0;
       }
-      .icon-sm {
-        width: 14px;
-        height: 14px;
-        flex-shrink: 0;
-      }
-      .species-icon svg {
-        width: 20px;
-        height: 20px;
-      }
 
       input[type="file"] {
         display: none;
       }
 
-      /* ── Status bar ── */
       .status-bar {
         display: flex;
         align-items: center;
@@ -272,29 +254,12 @@
         }
       }
 
-      .spinner {
-        width: 13px;
-        height: 13px;
-        border: 2px solid rgba(164, 125, 232, 0.3);
-        border-top-color: var(--accent-purple-light);
-        border-radius: 50%;
-        animation: spin 0.7s linear infinite;
-        flex-shrink: 0;
-      }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      /* ── Analysis panel ── */
       .analysis-panel {
         display: flex;
         flex-direction: column;
         gap: 16px;
       }
 
-      /* Risk score card */
       .risk-card {
         background: var(--bg-card);
         border: 1px solid var(--border);
@@ -341,7 +306,6 @@
         margin-top: 1px;
       }
 
-      /* Score bar */
       .score-row {
         display: flex;
         justify-content: space-between;
@@ -372,7 +336,6 @@
           background 0.5s ease;
       }
 
-      /* Risk badge */
       .risk-badge {
         display: inline-flex;
         align-items: center;
@@ -407,7 +370,6 @@
         padding-top: 10px;
       }
 
-      /* Settings card */
       .settings-card {
         background: var(--bg-card);
         border: 1px solid var(--border);
@@ -454,7 +416,6 @@
         word-break: break-all;
       }
 
-      /* Quick action btns */
       .action-row {
         display: flex;
         gap: 10px;
@@ -466,7 +427,6 @@
     </style>
   </head>
   <body>
-    <!-- Header -->
     <div class="app-header">
       <div class="app-logo">
         <svg
@@ -495,9 +455,7 @@
       <div class="app-badge">petzy AI</div>
     </div>
 
-    <!-- Main layout -->
     <div class="container">
-      <!-- ── Video panel ── -->
       <div class="panel">
         <div class="panel-title">Monitoramento ao vivo</div>
 
@@ -574,9 +532,7 @@
         </div>
       </div>
 
-      <!-- ── Analysis panel ── -->
       <div class="analysis-panel">
-        <!-- Action buttons -->
         <div class="action-row">
           <button class="btn-ghost" id="toggleAutoBtn">
             <svg
@@ -609,13 +565,11 @@
           </button>
         </div>
 
-        <!-- Result card -->
         <div class="risk-card" id="analysisResult">
           <div class="risk-card-label">Última detecção</div>
           <div class="risk-empty">Nenhuma análise ainda.</div>
         </div>
 
-        <!-- Settings card -->
         <div class="settings-card">
           <div class="panel-title" style="margin-bottom: 12px">
             Configurações
@@ -637,302 +591,432 @@
             class="setting-row"
             style="flex-direction: column; align-items: flex-start; gap: 6px"
           >
-            <span class="setting-label">Endpoint</span>
-            <div class="endpoint-badge">http://localhost:5214/frames</div>
+            <span class="setting-label">Endpoint (backend)</span>
+            <div class="endpoint-badge">http://localhost:8000/analyze-frame</div>
           </div>
         </div>
       </div>
     </div>
 
     <script>
-      const BACKEND_URL = "http://localhost:5217/frames";
-      let mediaStream = null;
-      let videoElement = document.getElementById("video");
-      let overlayCanvas = document.getElementById("overlayCanvas");
-      let ctx = overlayCanvas.getContext("2d");
-      let autoAnalysis = true;
-      let intervalMs = 1000;
-      let intervalTimer = null;
-      let currentVideoSource = null;
+      // ---------- CONFIGURAÇÕES (comunicam apenas com o backend real) ----------
+      const BACKEND_URL = "http://localhost:8000/analyze-frame";
+      const MOTION_THRESHOLD = 25;
+      const MOTION_PIXEL_RATIO = 0.02;
+      const DEFAULT_CAPTURE_INTERVAL = 1000;
+      const MAX_WIDTH = 640;
 
+      // ---------- ELEMENTOS DOM ----------
+      const videoElement = document.getElementById("video");
+      const overlayCanvas = document.getElementById("overlayCanvas");
+      const videoIdleDiv = document.getElementById("videoIdle");
+      const statusDot = document.getElementById("statusDot");
+      const statusMsgSpan = document.getElementById("statusMsg");
+      const analysisDiv = document.getElementById("analysisResult");
       const startCameraBtn = document.getElementById("startCameraBtn");
-      const videoUpload = document.getElementById("videoUpload");
       const stopBtn = document.getElementById("stopBtn");
+      const videoUpload = document.getElementById("videoUpload");
       const toggleAutoBtn = document.getElementById("toggleAutoBtn");
+      const toggleLabel = document.getElementById("toggleLabel");
       const captureNowBtn = document.getElementById("captureNowBtn");
       const intervalInput = document.getElementById("intervalInput");
-      const statusMsg = document.getElementById("statusMsg");
-      const statusDot = document.getElementById("statusDot");
-      const analysisDiv = document.getElementById("analysisResult");
-      const videoIdle = document.getElementById("videoIdle");
 
-      function updateStatus(text, mode = "idle") {
-        statusMsg.textContent = text;
+      // ---------- ESTADO GLOBAL ----------
+      let mediaStream = null;
+      let currentVideoSrc = null;
+      let autoAnalysisActive = true;
+      let captureIntervalId = null;
+      let lastSentTimestamp = 0;
+      let lastFrameData = null;
+      let isSendingFrame = false;
+      let motionCanvas = document.createElement("canvas");
+      let motionCtx = motionCanvas.getContext("2d", {
+        willReadFrequently: true,
+      });
+      let currentVideoDimensions = { width: 0, height: 0 };
+      let activeVideoSource = false;
+      let lastSentFrameSize = { width: 0, height: 0 }; // dimensões do último frame enviado
+
+      // ---------- FUNÇÕES AUXILIARES UI ----------
+      function updateStatus(message, state = "idle") {
+        statusMsgSpan.innerText = message;
         statusDot.className = "status-dot";
-        if (mode === "active") statusDot.classList.add("active");
-        if (mode === "loading") statusDot.classList.add("loading");
-        if (mode === "error") statusDot.classList.add("error");
+        if (state === "active") statusDot.classList.add("active");
+        else if (state === "loading") statusDot.classList.add("loading");
+        else if (state === "error") statusDot.classList.add("error");
       }
 
-      function setIdleOverlay(visible) {
-        if (visible) {
-          videoIdle.classList.remove("hidden");
-        } else {
-          videoIdle.classList.add("hidden");
-        }
+      function showIdleOverlay(show) {
+        videoIdleDiv.classList.toggle("hidden", !show);
       }
 
-      function drawBoundingBox(bbox, label) {
-        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-        if (!bbox || bbox.length !== 4) return;
-        let [x, y, w, h] = bbox;
-        if (
-          x === 0 &&
-          y === 0 &&
-          w === overlayCanvas.width &&
-          h === overlayCanvas.height
-        )
-          return;
-        ctx.strokeStyle = "#f97316";
-        ctx.lineWidth = 2.5;
-        ctx.fillStyle = "rgba(249,115,22,0.12)";
-        ctx.fillRect(x, y, w, h);
-        ctx.strokeRect(x, y, w, h);
-        if (label) {
-          ctx.font = 'bold 13px "Segoe UI"';
-          const tw = ctx.measureText(label).width + 12;
-          ctx.fillStyle = "#f97316";
-          ctx.fillRect(x, y - 22, tw, 22);
-          ctx.fillStyle = "#fff";
-          ctx.fillText(label, x + 6, y - 6);
-        }
+      function resetMotionBuffer() {
+        lastFrameData = null;
       }
 
-      function resizeCanvas() {
-        if (videoElement.videoWidth && videoElement.videoHeight) {
-          overlayCanvas.width = videoElement.videoWidth;
-          overlayCanvas.height = videoElement.videoHeight;
-        }
-      }
-
-      async function sendFrameToBackend() {
+      function syncOverlaySize() {
         if (!videoElement.videoWidth || !videoElement.videoHeight) return;
-        const tempCanvas = document.createElement("canvas");
-        const ctx = tempCanvas.getContext("2d");
-        // Reduz para no máximo 640px de largura (ou 480px para mais fps)
-        const maxWidth = 640;
-        const scale = maxWidth / videoElement.videoWidth;
-        tempCanvas.width = maxWidth;
-        tempCanvas.height = videoElement.videoHeight * scale;
-        ctx.drawImage(videoElement, 0, 0, tempCanvas.width, tempCanvas.height);
-        const blob = await new Promise((r) =>
-          tempCanvas.toBlob(r, "image/jpeg", 0.6),
-        );
-        const formData = new FormData();
-        formData.append("Frame", blob, "frame.jpg");
-        formData.append("Timestamp", new Date().toISOString());
+        overlayCanvas.width = videoElement.clientWidth;
+        overlayCanvas.height = videoElement.clientHeight;
+        overlayCanvas.style.width = `${videoElement.clientWidth}px`;
+        overlayCanvas.style.height = `${videoElement.clientHeight}px`;
+
+        const displayWidth = videoElement.clientWidth;
+        const displayHeight = videoElement.clientHeight;
+        const videoRawW = videoElement.videoWidth;
+        const videoRawH = videoElement.videoHeight;
+        if (videoRawW && videoRawH) {
+          const scale = Math.min(
+            displayWidth / videoRawW,
+            displayHeight / videoRawH,
+          );
+          const drawW = videoRawW * scale;
+          const drawH = videoRawH * scale;
+          const offsetX = (displayWidth - drawW) / 2;
+          const offsetY = (displayHeight - drawH) / 2;
+          currentVideoDimensions = {
+            offsetX,
+            offsetY,
+            scale,
+            rawW: videoRawW,
+            rawH: videoRawH,
+          };
+        }
+      }
+
+      // Desenha bounding box a partir de [x, y, w, h] normalizado (0-1) relativo ao frame enviado
+      function drawNormalizedBbox(bboxNorm, label = "") {
+        const ctx = overlayCanvas.getContext("2d");
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        if (!bboxNorm || bboxNorm.length !== 4) return;
+        const { offsetX, offsetY, scale, rawW, rawH } = currentVideoDimensions;
+        if (!rawW || !rawH) return;
+
+        // bboxNorm é [x, y, w, h] em coordenadas relativas ao frame enviado (0..1)
+        const [xNorm, yNorm, wNorm, hNorm] = bboxNorm;
+        // Mapeia para as coordenadas no vídeo original (rawW, rawH)
+        const xRaw = xNorm * rawW;
+        const yRaw = yNorm * rawH;
+        const wRaw = wNorm * rawW;
+        const hRaw = hNorm * rawH;
+
+        // Aplica transformação de exibição (contain)
+        const x1 = xRaw * scale + offsetX;
+        const y1 = yRaw * scale + offsetY;
+        const x2 = (xRaw + wRaw) * scale + offsetX;
+        const y2 = (yRaw + hRaw) * scale + offsetY;
+
+        ctx.save();
+        ctx.strokeStyle = "#f97316";
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 0;
+        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        if (label) {
+          ctx.font = "bold 14px 'Segoe UI'";
+          ctx.fillStyle = "#f97316";
+          ctx.shadowColor = "black";
+          ctx.fillText(label, x1 + 5, y1 - 5);
+        }
+        ctx.restore();
+      }
+
+      function getSpeciesDisplayName(species) {
+        if (species === "cao") return "Cão";
+        if (species === "gato") return "Gato";
+        return species.charAt(0).toUpperCase() + species.slice(1);
+      }
+
+      function getRiskLevelClass(riskScore) {
+        if (riskScore >= 0.7) return "critico";
+        if (riskScore >= 0.4) return "atencao";
+        return "normal";
+      }
+
+      function getRiskText(riskScore) {
+        if (riskScore >= 0.7) return "Crítico";
+        if (riskScore >= 0.4) return "Atenção";
+        return "Normal";
+      }
+
+      function displayAnalysisFromBackend(data) {
+        // O backend retorna: { animals: [ { species, bbox, riskScore, ... } ], processedAt }
+        if (!data.animals || data.animals.length === 0) {
+          analysisDiv.innerHTML = `<div class="risk-card-label">Última detecção</div><div class="risk-empty">Nenhum animal detectado.</div>`;
+          drawNormalizedBbox(null);
+          return;
+        }
+
+        const animal = data.animals[0];
+        const species = animal.species || "indefinido";
+        const riskScore = animal.riskScore ?? 0.5;
+        const percent = (riskScore * 100).toFixed(1);
+        const riskLevel = getRiskLevelClass(riskScore);
+        const riskText = getRiskText(riskScore);
+        const barColor =
+          riskLevel === "critico"
+            ? "#ef4444"
+            : riskLevel === "atencao"
+              ? "#eab308"
+              : "#22c55e";
+
+        const iconMap = {
+          cão: "🐕",
+          gato: "🐈",
+          default: "🐾",
+        };
+        const speciesDisplay = getSpeciesDisplayName(species);
+        const speciesIcon = iconMap[species.toLowerCase()] || iconMap.default;
+
+        analysisDiv.innerHTML = `
+          <div class="risk-card-label">Análise em tempo real</div>
+          <div class="risk-species"><div class="species-icon">${speciesIcon}</div><div><div class="species-name">${speciesDisplay}</div><div class="species-sub">detectado</div></div></div>
+          <div class="score-row"><span class="score-label">Índice de desconforto</span><span class="score-value">${percent}%</span></div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width: ${percent}%; background: ${barColor};"></div></div>
+          <div><span class="risk-badge ${riskLevel}">⚠️ ${riskText}</span></div>
+        `;
+
+        // Desenhar a bounding box se existir (formato [x, y, w, h] normalizado 0-1)
+        if (animal.bbox && animal.bbox.length === 4) {
+          // O backend retorna bbox em pixels relativos à imagem enviada. Precisamos normalizar.
+          // O front-end conhece lastSentFrameSize (largura, altura do frame enviado).
+          if (lastSentFrameSize.width > 0 && lastSentFrameSize.height > 0) {
+            const [xPx, yPx, wPx, hPx] = animal.bbox;
+            const normX = xPx / lastSentFrameSize.width;
+            const normY = yPx / lastSentFrameSize.height;
+            const normW = wPx / lastSentFrameSize.width;
+            const normH = hPx / lastSentFrameSize.height;
+            drawNormalizedBbox([normX, normY, normW, normH], `${speciesDisplay} • ${percent}%`);
+          } else {
+            // fallback: assumir que já está normalizado (caso backend mude)
+            drawNormalizedBbox(animal.bbox, `${speciesDisplay} • ${percent}%`);
+          }
+        } else {
+          drawNormalizedBbox(null);
+        }
+      }
+
+      // Detecção de movimento simples (economia de envios)
+      function detectMotion() {
+        if (!videoElement.videoWidth || !videoElement.videoHeight) return true;
+        const wRaw = videoElement.videoWidth;
+        const hRaw = videoElement.videoHeight;
+        const scale = Math.min(1, MAX_WIDTH / wRaw);
+        const w = Math.floor(wRaw * scale);
+        const h = Math.floor(hRaw * scale);
+        if (motionCanvas.width !== w || motionCanvas.height !== h) {
+          motionCanvas.width = w;
+          motionCanvas.height = h;
+        }
+        motionCtx.drawImage(videoElement, 0, 0, w, h);
+        const currentImg = motionCtx.getImageData(0, 0, w, h);
+        if (
+          !lastFrameData ||
+          lastFrameData.width !== w ||
+          lastFrameData.height !== h
+        ) {
+          lastFrameData = currentImg;
+          return true;
+        }
+        const curr = currentImg.data;
+        const prev = lastFrameData.data;
+        let changed = 0;
+        const totalPixels = w * h;
+        for (let i = 0; i < curr.length; i += 4) {
+          const lumCurr =
+            0.299 * curr[i] + 0.587 * curr[i + 1] + 0.114 * curr[i + 2];
+          const lumPrev =
+            0.299 * prev[i] + 0.587 * prev[i + 1] + 0.114 * prev[i + 2];
+          if (Math.abs(lumCurr - lumPrev) > MOTION_THRESHOLD) changed++;
+        }
+        lastFrameData = currentImg;
+        return changed / totalPixels > MOTION_PIXEL_RATIO;
+      }
+
+      // Envia frame para o backend (sem qualquer simulação ou análise local)
+      async function captureAndSend() {
+        if (!activeVideoSource) return;
+        if (!videoElement.videoWidth || !videoElement.videoHeight) return;
+        const now = Date.now();
+        const intervalMs =
+          parseInt(intervalInput.value, 10) || DEFAULT_CAPTURE_INTERVAL;
+        if (now - lastSentTimestamp < intervalMs) return;
+        if (!detectMotion()) {
+          updateStatus("Aguardando movimento...", "idle");
+          return;
+        }
+        if (isSendingFrame) return;
+        isSendingFrame = true;
         try {
-          updateStatus("Enviando frame...", "loading");
+          const tempCanvas = document.createElement("canvas");
+          const ctx = tempCanvas.getContext("2d");
+          const scale = Math.min(1, MAX_WIDTH / videoElement.videoWidth);
+          const outW = Math.floor(videoElement.videoWidth * scale);
+          const outH = Math.floor(videoElement.videoHeight * scale);
+          tempCanvas.width = outW;
+          tempCanvas.height = outH;
+          ctx.drawImage(videoElement, 0, 0, outW, outH);
+          lastSentFrameSize = { width: outW, height: outH };
+
+          const blob = await new Promise((r) =>
+            tempCanvas.toBlob(r, "image/jpeg", 0.7),
+          );
+          if (!blob) throw new Error("Falha ao criar blob");
+
+          const formData = new FormData();
+          formData.append("file", blob, "frame.jpg"); // campo correto: "file"
+
+          updateStatus("Enviando frame para análise...", "loading");
           const response = await fetch(BACKEND_URL, {
             method: "POST",
             body: formData,
           });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const data = await response.json();
-          updateStatus("Análise recebida", "active");
-          displayAnalysis(data);
-          if (data.analysis?.animals?.length > 0) {
-            const a = data.analysis.animals[0];
-            drawBoundingBox(
-              a.bbox,
-              `${a.species} • ${(a.riskScore * 100).toFixed(1)}%`,
-            );
-          } else {
-            drawBoundingBox(null);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 100)}`);
           }
+
+          const data = await response.json();
+          updateStatus("Análise recebida do servidor", "active");
+          displayAnalysisFromBackend(data);
+          lastSentTimestamp = now;
         } catch (err) {
-          updateStatus("Erro: " + err.message, "error");
-          drawBoundingBox(null);
-          analysisDiv.innerHTML = `
-                <div class="risk-card-label">Última detecção</div>
-                <div class="risk-empty" style="color:#f87171;">Não foi possível contactar o backend.<br><small style="color:var(--text-muted)">${BACKEND_URL}</small></div>`;
+          console.error("Erro na comunicação com o backend:", err);
+          updateStatus(`Erro: ${err.message} — verifique se o backend está rodando`, "error");
+          drawNormalizedBbox(null);
+          analysisDiv.innerHTML = `<div class="risk-card-label">Última detecção</div><div class="risk-empty">Erro de conexão com o servidor.</div>`;
+        } finally {
+          isSendingFrame = false;
         }
       }
 
-      function displayAnalysis(data) {
-        const analysis = data?.analysis;
-        if (!analysis?.animals?.length) {
-          analysisDiv.innerHTML = `<div class="risk-card-label">Última detecção</div><div class="risk-empty">Nenhum animal detectado.</div>`;
-          return;
+      function stopAllMedia() {
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+          mediaStream = null;
         }
-        const a = analysis.animals[0];
-        const score = (a.riskScore * 100).toFixed(1);
-        const lvl = a.riskLevel || "normal";
-        const barColor =
-          lvl === "normal"
-            ? "#22c55e"
-            : lvl === "atencao"
-              ? "#eab308"
-              : "#ef4444";
-        const ts = analysis.processedAt
-          ? new Date(analysis.processedAt).toLocaleTimeString()
-          : "";
-
-        const isCat = (a.species || "").toLowerCase().includes("cat");
-        const speciesSvg = isCat
-          ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l2-4 3 3h6l3-3 2 4"/><path d="M4 6C2 8 2 11 3 13c1 3 4 5 9 5s8-2 9-5c1-2 1-5-1-7H4z"/><circle cx="9" cy="13" r="0.8" fill="currentColor"/><circle cx="15" cy="13" r="0.8" fill="currentColor"/><path d="M12 15v1.5"/></svg>`
-          : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5.5C10 4.1 8.9 3 7.5 3S5 4.1 5 5.5v1C3.3 7.6 2 9.7 2 12v4a2 2 0 0 0 2 2h1v1a1 1 0 0 0 2 0v-1h6v1a1 1 0 0 0 2 0v-1h1a2 2 0 0 0 2-2v-4c0-2.3-1.3-4.4-3-5.5v-1C15 4.1 13.9 3 12.5 3S10 4.1 10 5.5z"/><circle cx="8" cy="13" r="0.8" fill="currentColor"/><circle cx="16" cy="13" r="0.8" fill="currentColor"/></svg>`;
-
-        const badgeIcon =
-          lvl === "normal"
-            ? `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>`
-            : lvl === "atencao"
-              ? `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
-              : `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
-
-        const lvlLabel =
-          lvl === "normal"
-            ? "Normal"
-            : lvl === "atencao"
-              ? "Atenção"
-              : "Crítico";
-
-        analysisDiv.innerHTML = `
-            <div class="risk-card-label">Última detecção</div>
-            <div class="risk-species">
-                <div class="species-icon" style="color:var(--accent-purple-light)">${speciesSvg}</div>
-                <div>
-                    <div class="species-name">${a.species === "desconhecido" ? "Não identificado" : a.species}</div>
-                    <div class="species-sub">Animal detectado</div>
-                </div>
-            </div>
-            <div class="score-row">
-                <span class="score-label">Score de dor</span>
-                <span class="score-value" style="color:${barColor}">${score}%</span>
-            </div>
-            <div class="score-bar-track">
-                <div class="score-bar-fill" style="width:${score}%;background:${barColor}"></div>
-            </div>
-            <div><span class="risk-badge ${lvl}">${badgeIcon} ${lvlLabel}</span></div>
-            ${ts ? `<div class="meta-row">Processado às ${ts}</div>` : ""}`;
-      }
-
-      function startAutoAnalysis() {
-        if (intervalTimer) clearInterval(intervalTimer);
-        if (!autoAnalysis) return;
-        intervalTimer = setInterval(() => {
-          if (videoElement.readyState >= 2 && videoElement.videoWidth)
-            sendFrameToBackend();
-        }, intervalMs);
-      }
-      function stopAutoAnalysis() {
-        clearInterval(intervalTimer);
-        intervalTimer = null;
-      }
-      const pauseIcon = `<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>`;
-      const playIcon = `<polygon points="5,3 19,12 5,21"/>`;
-
-      function setAutoMode(enabled) {
-        autoAnalysis = enabled;
-        const icon = document.getElementById("toggleIcon");
-        const label = document.getElementById("toggleLabel");
-        if (enabled) {
-          icon.innerHTML = pauseIcon;
-          label.textContent = "Pausar análise";
-          toggleAutoBtn.className = "btn-ghost";
-          startAutoAnalysis();
-        } else {
-          icon.innerHTML = playIcon;
-          label.textContent = "Retomar análise";
-          toggleAutoBtn.className = "btn-primary";
-          stopAutoAnalysis();
+        if (currentVideoSrc) {
+          URL.revokeObjectURL(currentVideoSrc);
+          currentVideoSrc = null;
         }
+        videoElement.pause();
+        videoElement.srcObject = null;
+        videoElement.src = "";
+        videoElement.load();
+        activeVideoSource = false;
+        resetMotionBuffer();
+        drawNormalizedBbox(null);
+        showIdleOverlay(true);
+        updateStatus("Parado. Inicie câmera ou carregue vídeo.", "idle");
+        analysisDiv.innerHTML = `<div class="risk-card-label">Última detecção</div><div class="risk-empty">Nenhuma análise ainda.</div>`;
+        lastSentFrameSize = { width: 0, height: 0 };
       }
 
-      async function initCamera() {
-        stopAll();
+      function startPeriodicAnalysis() {
+        if (captureIntervalId) clearInterval(captureIntervalId);
+        captureIntervalId = setInterval(() => {
+          if (
+            autoAnalysisActive &&
+            activeVideoSource &&
+            videoElement.readyState >= 2
+          ) {
+            captureAndSend();
+          }
+        }, 300);
+      }
+
+      async function startCamera() {
+        stopAllMedia();
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
+            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
           });
           mediaStream = stream;
           videoElement.srcObject = stream;
           await videoElement.play();
-          currentVideoSource = "camera";
-          setIdleOverlay(false);
-          updateStatus("Câmera ativa — análise em andamento", "active");
-          const onReady = () => {
-            resizeCanvas();
-            startAutoAnalysis();
-          };
-          if (videoElement.readyState >= 1) {
-            onReady();
-          } else {
-            videoElement.addEventListener("loadedmetadata", onReady, {
-              once: true,
-            });
-          }
+          activeVideoSource = true;
+          showIdleOverlay(false);
+          resetMotionBuffer();
+          updateStatus("Câmera ativa - análise automática", "active");
+          setTimeout(() => syncOverlaySize(), 100);
+          videoElement.addEventListener("resize", syncOverlaySize);
+          videoElement.addEventListener("loadedmetadata", syncOverlaySize);
+          syncOverlaySize();
         } catch (err) {
           updateStatus("Erro ao acessar câmera: " + err.message, "error");
+          activeVideoSource = false;
         }
       }
 
-      function loadVideo(file) {
+      function loadVideoFile(file) {
         if (!file) return;
-        stopAll();
-        videoElement.src = URL.createObjectURL(file);
-        videoElement.addEventListener(
-          "loadedmetadata",
-          () => {
-            resizeCanvas();
-            videoElement.play();
-            currentVideoSource = "file";
-            setIdleOverlay(false);
-            updateStatus("Vídeo carregado — análise em andamento", "active");
-            startAutoAnalysis();
-          },
-          { once: true },
-        );
-        videoElement.onended = () => {
-          updateStatus("Vídeo finalizado", "idle");
-          stopAutoAnalysis();
+        stopAllMedia();
+        const url = URL.createObjectURL(file);
+        currentVideoSrc = url;
+        videoElement.src = url;
+        videoElement.load();
+        videoElement.onloadeddata = () => {
+          videoElement.play().catch((e) => console.warn(e));
+          activeVideoSource = true;
+          showIdleOverlay(false);
+          resetMotionBuffer();
+          updateStatus("Vídeo carregado - análise ativa", "active");
+          syncOverlaySize();
+        };
+        videoElement.onerror = () => {
+          updateStatus("Erro ao carregar vídeo", "error");
+          stopAllMedia();
         };
       }
 
-      function stopAll() {
-        stopAutoAnalysis();
-        if (mediaStream) {
-          mediaStream.getTracks().forEach((t) => t.stop());
-          mediaStream = null;
-        }
-        videoElement.srcObject = null;
-        if (videoElement.src?.startsWith("blob:"))
-          URL.revokeObjectURL(videoElement.src);
-        videoElement.src = "";
-        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-        currentVideoSource = null;
-        setIdleOverlay(true);
-        updateStatus("Parado", "idle");
+      function toggleAutoAnalysis() {
+        autoAnalysisActive = !autoAnalysisActive;
+        toggleLabel.innerText = autoAnalysisActive
+          ? "⏸️ Pausar análise"
+          : "▶️ Retomar análise";
+        updateStatus(
+          autoAnalysisActive ? "Análise automática ativada" : "Análise pausada",
+          autoAnalysisActive ? "active" : "idle",
+        );
+        if (!autoAnalysisActive) drawNormalizedBbox(null);
       }
 
-      startCameraBtn.onclick = initCamera;
-      stopBtn.onclick = stopAll;
-      videoUpload.onchange = (e) => {
-        if (e.target.files.length) loadVideo(e.target.files[0]);
-      };
-      toggleAutoBtn.onclick = () => setAutoMode(!autoAnalysis);
-      captureNowBtn.onclick = sendFrameToBackend;
-      intervalInput.onchange = () => {
-        intervalMs = parseInt(intervalInput.value, 10) || 1000;
-        if (autoAnalysis) {
-          stopAutoAnalysis();
-          startAutoAnalysis();
+      async function manualCapture() {
+        if (!activeVideoSource) {
+          updateStatus("Nenhuma fonte de vídeo ativa", "error");
+          return;
         }
-      };
-      videoElement.addEventListener("resize", resizeCanvas);
-      window.addEventListener("resize", resizeCanvas);
-      resizeCanvas();
-      updateStatus("Pronto — aguardando câmera ou vídeo", "idle");
+        if (isSendingFrame) return;
+        const oldAuto = autoAnalysisActive;
+        autoAnalysisActive = true;
+        await captureAndSend();
+        autoAnalysisActive = oldAuto;
+      }
+
+      // ---------- EVENTOS ----------
+      startCameraBtn.addEventListener("click", startCamera);
+      stopBtn.addEventListener("click", stopAllMedia);
+      videoUpload.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) loadVideoFile(e.target.files[0]);
+        e.target.value = null;
+      });
+      toggleAutoBtn.addEventListener("click", toggleAutoAnalysis);
+      captureNowBtn.addEventListener("click", manualCapture);
+      window.addEventListener("resize", () => {
+        syncOverlaySize();
+        drawNormalizedBbox(null);
+      });
+      videoElement.addEventListener("play", () => {
+        syncOverlaySize();
+        resetMotionBuffer();
+      });
+
+      const resizeObserver = new ResizeObserver(() => syncOverlaySize());
+      resizeObserver.observe(document.getElementById("videoWrapper"));
+
+      startPeriodicAnalysis();
+      showIdleOverlay(true);
+      updateStatus("Inicie a câmera ou carregue um vídeo", "idle");
     </script>
   </body>
 </html>
