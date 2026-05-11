@@ -8,6 +8,7 @@
     />
     <title>Petzy — Análise de Dor em Animais</title>
     <style>
+      /* ========== CSS BASE (mantido) ========== */
       :root {
         --bg-app: #0f0d1a;
         --bg-panel: #16122b;
@@ -306,6 +307,223 @@
         margin-top: 1px;
       }
 
+      /* ========== ESCALAS VISUAIS MODERNAS ========== */
+      .scale-container {
+        width: 100%;
+        margin: 16px 0 0 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .scale-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .scale-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--accent-orange-light);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .scale-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--accent-orange);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Barra de progresso visual moderna */
+      .scale-bar {
+        position: relative;
+        height: 36px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(124, 92, 191, 0.2);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .scale-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          #22c55e 0%,
+          #84cc16 35%,
+          #eab308 60%,
+          #f97316 85%,
+          #ef4444 100%
+        );
+        border-radius: 12px;
+        transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow:
+          0 0 16px rgba(249, 115, 22, 0.5),
+          inset 0 1px 2px rgba(255, 255, 255, 0.15);
+      }
+
+      .scale-fill.animate {
+        animation: scaleShimmer 2s ease-in-out infinite;
+      }
+
+      @keyframes scaleShimmer {
+        0%,
+        100% {
+          box-shadow:
+            0 0 16px rgba(249, 115, 22, 0.5),
+            inset 0 1px 2px rgba(255, 255, 255, 0.15);
+        }
+        50% {
+          box-shadow:
+            0 0 24px rgba(249, 115, 22, 0.7),
+            inset 0 1px 2px rgba(255, 255, 255, 0.25);
+        }
+      }
+
+      .scale-label {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 14px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+        letter-spacing: 0.02em;
+      }
+
+      /* Marcadores de nível */
+      .scale-markers {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .scale-marker {
+        flex: 1;
+        height: 28px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1.5px solid rgba(124, 92, 191, 0.25);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+
+      .scale-marker.active {
+        background: linear-gradient(
+          135deg,
+          rgba(249, 115, 22, 0.3),
+          rgba(249, 115, 22, 0.18)
+        );
+        border-color: var(--accent-orange);
+        color: var(--accent-orange-light);
+        box-shadow:
+          0 0 12px rgba(249, 115, 22, 0.35),
+          inset 0 1px 2px rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .scale-marker:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(124, 92, 191, 0.4);
+        transform: translateY(-1px);
+      }
+
+      /* Descrição detalhada */
+      .scale-description {
+        background: rgba(249, 115, 22, 0.08);
+        border: 1px solid rgba(249, 115, 22, 0.2);
+        border-radius: 10px;
+        padding: 12px;
+        margin-top: 10px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--text-secondary);
+        font-style: italic;
+      }
+
+      .scale-description strong {
+        color: var(--accent-orange-light);
+        font-style: normal;
+        font-weight: 600;
+      }
+
+      /* Container para escalas múltiplas */
+      .scales-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .scale-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Status indicador */
+      .scale-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 8px;
+      }
+
+      .scale-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: statusPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes statusPulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.6;
+        }
+      }
+
+      .scale-status.normal .scale-status-dot {
+        background: var(--status-normal);
+        color: var(--status-normal);
+        animation: none;
+      }
+      .scale-status.warning .scale-status-dot {
+        background: var(--status-warn);
+        color: var(--status-warn);
+        animation: statusPulse 1.5s ease-in-out infinite;
+      }
+      .scale-status.critical .scale-status-dot {
+        background: var(--status-crit);
+        color: var(--status-crit);
+        animation: statusPulse 0.8s ease-in-out infinite;
+      }
+
       .score-row {
         display: flex;
         justify-content: space-between;
@@ -319,21 +537,6 @@
       .score-value {
         font-size: 20px;
         font-weight: 700;
-      }
-      .score-bar-track {
-        width: 100%;
-        height: 6px;
-        background: rgba(255, 255, 255, 0.07);
-        border-radius: 99px;
-        overflow: hidden;
-        margin-bottom: 14px;
-      }
-      .score-bar-fill {
-        height: 100%;
-        border-radius: 99px;
-        transition:
-          width 0.5s ease,
-          background 0.5s ease;
       }
 
       .risk-badge {
@@ -516,7 +719,7 @@
           <input
             type="file"
             id="videoUpload"
-            accept="video/mp4,video/webm,video/ogg"
+            accept="video/mp4,video/webm,Video/mp4"
           />
           <button class="btn-danger" id="stopBtn">
             <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -592,19 +795,27 @@
             style="flex-direction: column; align-items: flex-start; gap: 6px"
           >
             <span class="setting-label">Endpoint (backend)</span>
-            <div class="endpoint-badge">http://localhost:8000/analyze-frame</div>
+            <div class="endpoint-badge">
+              http://localhost:8000/analyze-frame
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <script>
-      // ---------- CONFIGURAÇÕES (comunicam apenas com o backend real) ----------
+      // ---------- CONFIGURAÇÕES ----------
       const BACKEND_URL = "http://localhost:8000/analyze-frame";
       const MOTION_THRESHOLD = 25;
       const MOTION_PIXEL_RATIO = 0.02;
       const DEFAULT_CAPTURE_INTERVAL = 1000;
       const MAX_WIDTH = 640;
+
+      // Parâmetros para estabilização automática
+      const STABILITY_WINDOW = 8;
+      const MIN_MEAN_CONFIDENCE = 0.75;
+      const MAX_SCORE_STD = 0.05;
+      const LOCK_HOLD_TIME_MS = 10000; // 10 segundos
 
       // ---------- ELEMENTOS DOM ----------
       const videoElement = document.getElementById("video");
@@ -635,7 +846,13 @@
       });
       let currentVideoDimensions = { width: 0, height: 0 };
       let activeVideoSource = false;
-      let lastSentFrameSize = { width: 0, height: 0 }; // dimensões do último frame enviado
+      let lastSentFrameSize = { width: 0, height: 0 };
+
+      // Variáveis para estabilização automática
+      let scoreBuffer = [];
+      let isLocked = false;
+      let lockedAnalysis = null;
+      let lockTimer = null;
 
       // ---------- FUNÇÕES AUXILIARES UI ----------
       function updateStatus(message, state = "idle") {
@@ -660,7 +877,6 @@
         overlayCanvas.height = videoElement.clientHeight;
         overlayCanvas.style.width = `${videoElement.clientWidth}px`;
         overlayCanvas.style.height = `${videoElement.clientHeight}px`;
-
         const displayWidth = videoElement.clientWidth;
         const displayHeight = videoElement.clientHeight;
         const videoRawW = videoElement.videoWidth;
@@ -684,32 +900,24 @@
         }
       }
 
-      // Desenha bounding box a partir de [x, y, w, h] normalizado (0-1) relativo ao frame enviado
       function drawNormalizedBbox(bboxNorm, label = "") {
         const ctx = overlayCanvas.getContext("2d");
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
         if (!bboxNorm || bboxNorm.length !== 4) return;
         const { offsetX, offsetY, scale, rawW, rawH } = currentVideoDimensions;
         if (!rawW || !rawH) return;
-
-        // bboxNorm é [x, y, w, h] em coordenadas relativas ao frame enviado (0..1)
         const [xNorm, yNorm, wNorm, hNorm] = bboxNorm;
-        // Mapeia para as coordenadas no vídeo original (rawW, rawH)
         const xRaw = xNorm * rawW;
         const yRaw = yNorm * rawH;
         const wRaw = wNorm * rawW;
         const hRaw = hNorm * rawH;
-
-        // Aplica transformação de exibição (contain)
         const x1 = xRaw * scale + offsetX;
         const y1 = yRaw * scale + offsetY;
         const x2 = (xRaw + wRaw) * scale + offsetX;
         const y2 = (yRaw + hRaw) * scale + offsetY;
-
         ctx.save();
         ctx.strokeStyle = "#f97316";
         ctx.lineWidth = 3;
-        ctx.shadowBlur = 0;
         ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
         if (label) {
           ctx.font = "bold 14px 'Segoe UI'";
@@ -726,6 +934,58 @@
         return species.charAt(0).toUpperCase() + species.slice(1);
       }
 
+      // ========== ESCALAS ==========
+      function getScaleLevel(species, riskScore) {
+        if (species === "gato") {
+          // Ajuste os limiares conforme necessário
+          if (riskScore < 0.4) return 0; // sem dor
+          if (riskScore < 0.75) return 1; // moderada (antes 0.5, agora 0.75)
+          return 2; // severa
+        } else if (species === "cao") {
+          // Para cães, pode manter o arredondamento ou usar faixas
+          const level = Math.round(riskScore * 4);
+          return Math.min(4, Math.max(0, level));
+        }
+        return null;
+      }
+
+      function getScaleMax(species) {
+        if (species === "cao") return 4;
+        if (species === "gato") return 2;
+        return 1;
+      }
+
+      function getScaleDescription(species, level) {
+        if (species === "cao") {
+          switch (level) {
+            case 0:
+              return "✓ Confortável, sem dor aparente";
+            case 1:
+              return "⚡ Leve desconforto, inquieto";
+            case 2:
+              return "⚠️ Dor moderada, perceptível";
+            case 3:
+              return "🔴 Dor intensa, incômodo significativo";
+            case 4:
+              return "🛑 Dor severa, agonia";
+            default:
+              return "";
+          }
+        } else if (species === "gato") {
+          switch (level) {
+            case 0:
+              return "✓ Sem dor (orelhas eretas, olhos abertos, focinho relaxado)";
+            case 1:
+              return "⚠️ Dor moderada (orelhas levemente afastadas, olhos semicerrados)";
+            case 2:
+              return "🛑 Dor severa (orelhas achatadas, olhos comprimidos, focinho tenso)";
+            default:
+              return "";
+          }
+        }
+        return "";
+      }
+
       function getRiskLevelClass(riskScore) {
         if (riskScore >= 0.7) return "critico";
         if (riskScore >= 0.4) return "atencao";
@@ -738,64 +998,211 @@
         return "Normal";
       }
 
-      function displayAnalysisFromBackend(data) {
-        // O backend retorna: { animals: [ { species, bbox, riskScore, ... } ], processedAt }
-        if (!data.animals || data.animals.length === 0) {
+      // ========== RENDERIZAÇÃO COM ESCALAS MODERNAS ==========
+      function renderAnalysisCard(
+        analysis,
+        isLockedMode = false,
+        remainingSec = null,
+      ) {
+        if (!analysis || !analysis.animals || analysis.animals.length === 0) {
           analysisDiv.innerHTML = `<div class="risk-card-label">Última detecção</div><div class="risk-empty">Nenhum animal detectado.</div>`;
           drawNormalizedBbox(null);
           return;
         }
-
-        const animal = data.animals[0];
+        const animal = analysis.animals[0];
         const species = animal.species || "indefinido";
         const riskScore = animal.riskScore ?? 0.5;
         const percent = (riskScore * 100).toFixed(1);
+        const level = getScaleLevel(species, riskScore);
+        const maxLevel = getScaleMax(species);
+        const levelDesc = getScaleDescription(species, level);
+        const scaleName = species === "cao" ? "CSU" : "Grimace";
+
         const riskLevel = getRiskLevelClass(riskScore);
         const riskText = getRiskText(riskScore);
-        const barColor =
-          riskLevel === "critico"
-            ? "#ef4444"
-            : riskLevel === "atencao"
-              ? "#eab308"
-              : "#22c55e";
 
-        const iconMap = {
-          cão: "🐕",
-          gato: "🐈",
-          default: "🐾",
-        };
+        const iconMap = { cão: "🐕", gato: "🐈", default: "🐾" };
         const speciesDisplay = getSpeciesDisplayName(species);
         const speciesIcon = iconMap[species.toLowerCase()] || iconMap.default;
+        const confidence = animal.confidence
+          ? (animal.confidence * 100).toFixed(0)
+          : null;
+
+        let lockBadge = "";
+        let timerInfo = "";
+        if (isLockedMode) {
+          lockBadge = " 🔒 ESTÁVEL";
+          if (remainingSec !== null) {
+            timerInfo = `<div class="meta-row">⏱️ Destrava em ${remainingSec}s</div>`;
+          } else {
+            timerInfo = `<div class="meta-row">🔒 Monitoramento estável ativado</div>`;
+          }
+        }
+
+        // Construir os marcadores de nível
+        const levelCount = maxLevel + 1;
+        let markersHtml = "";
+        for (let i = 0; i <= maxLevel; i++) {
+          const activeClass = i === level ? "active" : "";
+          markersHtml += `<div class="scale-marker ${activeClass}">${i}</div>`;
+        }
+
+        // Cálculo da largura do preenchimento
+        const fillPercent = (level / maxLevel) * 100;
+
+        // Status dinâmico
+        let statusClass = "normal";
+        if (riskScore >= 0.7) statusClass = "critical";
+        else if (riskScore >= 0.4) statusClass = "warning";
 
         analysisDiv.innerHTML = `
-          <div class="risk-card-label">Análise em tempo real</div>
-          <div class="risk-species"><div class="species-icon">${speciesIcon}</div><div><div class="species-name">${speciesDisplay}</div><div class="species-sub">detectado</div></div></div>
-          <div class="score-row"><span class="score-label">Índice de desconforto</span><span class="score-value">${percent}%</span></div>
-          <div class="score-bar-track"><div class="score-bar-fill" style="width: ${percent}%; background: ${barColor};"></div></div>
-          <div><span class="risk-badge ${riskLevel}">⚠️ ${riskText}</span></div>
+          <div class="risk-card-label">Análise ${isLockedMode ? "ESTÁVEL 🔒" : "em tempo real"}</div>
+          <div class="risk-species">
+            <div class="species-icon">${speciesIcon}</div>
+            <div>
+              <div class="species-name">${speciesDisplay}</div>
+              <div class="species-sub">detectado</div>
+            </div>
+          </div>
+          
+          <div class="scale-container">
+            <div class="scale-item">
+              <div class="scale-header">
+                <div class="scale-name">Escala ${scaleName}</div>
+                <div class="scale-value">${level}</div>
+              </div>
+              
+              <div class="scale-bar">
+                <div class="scale-fill ${isLockedMode ? "" : "animate"}" style="width: ${fillPercent}%;"></div>
+                <div class="scale-label">${percent}%</div>
+              </div>
+              
+              <div class="scale-markers">${markersHtml}</div>
+              
+              <div class="scale-description">${levelDesc}</div>
+              
+              <div class="scale-status ${statusClass}">
+                <div class="scale-status-dot"></div>
+                <span>${riskText}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+            <span class="risk-badge ${riskLevel}">⚠️ ${riskText}</span>
+            <span style="font-size: 11px; color: var(--text-muted);">Conf: ${confidence}%</span>
+          </div>
+          
+          ${timerInfo}
         `;
 
-        // Desenhar a bounding box se existir (formato [x, y, w, h] normalizado 0-1)
-        if (animal.bbox && animal.bbox.length === 4) {
-          // O backend retorna bbox em pixels relativos à imagem enviada. Precisamos normalizar.
-          // O front-end conhece lastSentFrameSize (largura, altura do frame enviado).
-          if (lastSentFrameSize.width > 0 && lastSentFrameSize.height > 0) {
-            const [xPx, yPx, wPx, hPx] = animal.bbox;
-            const normX = xPx / lastSentFrameSize.width;
-            const normY = yPx / lastSentFrameSize.height;
-            const normW = wPx / lastSentFrameSize.width;
-            const normH = hPx / lastSentFrameSize.height;
-            drawNormalizedBbox([normX, normY, normW, normH], `${speciesDisplay} • ${percent}%`);
-          } else {
-            // fallback: assumir que já está normalizado (caso backend mude)
-            drawNormalizedBbox(animal.bbox, `${speciesDisplay} • ${percent}%`);
-          }
+        if (
+          animal.bbox &&
+          animal.bbox.length === 4 &&
+          lastSentFrameSize.width > 0 &&
+          lastSentFrameSize.height > 0
+        ) {
+          const [xPx, yPx, wPx, hPx] = animal.bbox;
+          const normX = xPx / lastSentFrameSize.width;
+          const normY = yPx / lastSentFrameSize.height;
+          const normW = wPx / lastSentFrameSize.width;
+          const normH = hPx / lastSentFrameSize.height;
+          drawNormalizedBbox(
+            [normX, normY, normW, normH],
+            `${speciesDisplay} • ${level}/${maxLevel}`,
+          );
         } else {
           drawNormalizedBbox(null);
         }
       }
 
-      // Detecção de movimento simples (economia de envios)
+      // ---------- ESTABILIZAÇÃO AUTOMÁTICA ----------
+      function addFrameToBuffer(data) {
+        if (!data.animals || data.animals.length === 0) {
+          if (scoreBuffer.length > 0)
+            console.log("Animal sumiu, resetando buffer.");
+          scoreBuffer = [];
+          return;
+        }
+        const animal = data.animals[0];
+        const item = {
+          score: animal.riskScore,
+          confidence: animal.confidence,
+          species: animal.species,
+          fullData: data,
+          timestamp: Date.now(),
+        };
+        scoreBuffer.push(item);
+        while (scoreBuffer.length > STABILITY_WINDOW) scoreBuffer.shift();
+        if (scoreBuffer.length < STABILITY_WINDOW) return;
+
+        const speciesSet = new Set(scoreBuffer.map((i) => i.species));
+        if (speciesSet.size !== 1) return;
+
+        const confMean =
+          scoreBuffer.reduce((sum, i) => sum + i.confidence, 0) /
+          STABILITY_WINDOW;
+        const scores = scoreBuffer.map((i) => i.score);
+        const meanScore = scores.reduce((a, b) => a + b, 0) / STABILITY_WINDOW;
+        const variance =
+          scores.reduce((sum, s) => sum + (s - meanScore) ** 2, 0) /
+          STABILITY_WINDOW;
+        const std = Math.sqrt(variance);
+
+        const isStable =
+          confMean >= MIN_MEAN_CONFIDENCE && std <= MAX_SCORE_STD;
+
+        if (isStable && !isLocked) {
+          let bestItem = scoreBuffer.reduce(
+            (best, curr) => (curr.confidence > best.confidence ? curr : best),
+            scoreBuffer[0],
+          );
+          lockAnalysis(bestItem.fullData);
+        }
+      }
+
+      function lockAnalysis(data) {
+        if (isLocked) return;
+        isLocked = true;
+        lockedAnalysis = data;
+        renderAnalysisCard(lockedAnalysis, true);
+        updateStatus(
+          `Análise estabilizada - resultado travado por ${LOCK_HOLD_TIME_MS / 1000}s`,
+          "active",
+        );
+        if (lockTimer) clearTimeout(lockTimer);
+        lockTimer = setTimeout(() => unlockAnalysis(), LOCK_HOLD_TIME_MS);
+        startLockCountdown();
+      }
+
+      function unlockAnalysis() {
+        if (!isLocked) return;
+        isLocked = false;
+        lockedAnalysis = null;
+        if (lockTimer) clearTimeout(lockTimer);
+        lockTimer = null;
+        scoreBuffer = [];
+        updateStatus("Monitoramento ao vivo restaurado", "active");
+        captureAndSend(true);
+        renderAnalysisCard({ animals: [] }, false);
+      }
+
+      function startLockCountdown() {
+        if (!isLocked) return;
+        let remaining = LOCK_HOLD_TIME_MS / 1000;
+        const interval = setInterval(() => {
+          if (!isLocked) {
+            clearInterval(interval);
+            return;
+          }
+          remaining--;
+          if (remaining <= 0) clearInterval(interval);
+          else if (lockedAnalysis)
+            renderAnalysisCard(lockedAnalysis, true, remaining);
+        }, 1000);
+      }
+
+      // ---------- DETECÇÃO DE MOVIMENTO ----------
       function detectMotion() {
         if (!videoElement.videoWidth || !videoElement.videoHeight) return true;
         const wRaw = videoElement.videoWidth;
@@ -832,15 +1239,23 @@
         return changed / totalPixels > MOTION_PIXEL_RATIO;
       }
 
-      // Envia frame para o backend (sem qualquer simulação ou análise local)
-      async function captureAndSend() {
+      // ---------- ENVIO DE FRAMES ----------
+      async function captureAndSend(force = false) {
         if (!activeVideoSource) return;
+        if (!autoAnalysisActive) {
+          updateStatus("Análise automática pausada.", "idle");
+          return;
+        }
+        if (isLocked && !force) {
+          updateStatus("Análise estabilizada - resultado travado", "active");
+          return;
+        }
         if (!videoElement.videoWidth || !videoElement.videoHeight) return;
         const now = Date.now();
         const intervalMs =
           parseInt(intervalInput.value, 10) || DEFAULT_CAPTURE_INTERVAL;
-        if (now - lastSentTimestamp < intervalMs) return;
-        if (!detectMotion()) {
+        if (now - lastSentTimestamp < intervalMs && !force) return;
+        if (!detectMotion() && !force) {
           updateStatus("Aguardando movimento...", "idle");
           return;
         }
@@ -856,40 +1271,43 @@
           tempCanvas.height = outH;
           ctx.drawImage(videoElement, 0, 0, outW, outH);
           lastSentFrameSize = { width: outW, height: outH };
-
           const blob = await new Promise((r) =>
             tempCanvas.toBlob(r, "image/jpeg", 0.7),
           );
           if (!blob) throw new Error("Falha ao criar blob");
-
           const formData = new FormData();
-          formData.append("file", blob, "frame.jpg"); // campo correto: "file"
-
+          formData.append("file", blob, "frame.jpg");
           updateStatus("Enviando frame para análise...", "loading");
           const response = await fetch(BACKEND_URL, {
             method: "POST",
             body: formData,
           });
-
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 100)}`);
+            throw new Error(
+              `HTTP ${response.status}: ${errorText.slice(0, 100)}`,
+            );
           }
-
           const data = await response.json();
-          updateStatus("Análise recebida do servidor", "active");
-          displayAnalysisFromBackend(data);
+          updateStatus("Análise recebida", "active");
+          if (!isLocked) {
+            renderAnalysisCard(data, false);
+            addFrameToBuffer(data);
+          } else if (force) {
+            renderAnalysisCard(data, false);
+            addFrameToBuffer(data);
+          }
           lastSentTimestamp = now;
         } catch (err) {
           console.error("Erro na comunicação com o backend:", err);
-          updateStatus(`Erro: ${err.message} — verifique se o backend está rodando`, "error");
+          updateStatus(`Erro: ${err.message}`, "error");
           drawNormalizedBbox(null);
-          analysisDiv.innerHTML = `<div class="risk-card-label">Última detecção</div><div class="risk-empty">Erro de conexão com o servidor.</div>`;
         } finally {
           isSendingFrame = false;
         }
       }
 
+      // ---------- CONTROLES DE MÍDIA ----------
       function stopAllMedia() {
         if (mediaStream) {
           mediaStream.getTracks().forEach((track) => track.stop());
@@ -910,19 +1328,9 @@
         updateStatus("Parado. Inicie câmera ou carregue vídeo.", "idle");
         analysisDiv.innerHTML = `<div class="risk-card-label">Última detecção</div><div class="risk-empty">Nenhuma análise ainda.</div>`;
         lastSentFrameSize = { width: 0, height: 0 };
-      }
-
-      function startPeriodicAnalysis() {
-        if (captureIntervalId) clearInterval(captureIntervalId);
-        captureIntervalId = setInterval(() => {
-          if (
-            autoAnalysisActive &&
-            activeVideoSource &&
-            videoElement.readyState >= 2
-          ) {
-            captureAndSend();
-          }
-        }, 300);
+        isLocked = false;
+        if (lockTimer) clearTimeout(lockTimer);
+        scoreBuffer = [];
       }
 
       async function startCamera() {
@@ -989,15 +1397,29 @@
         if (isSendingFrame) return;
         const oldAuto = autoAnalysisActive;
         autoAnalysisActive = true;
-        await captureAndSend();
+        await captureAndSend(true);
         autoAnalysisActive = oldAuto;
       }
 
-      // ---------- EVENTOS ----------
+      function startPeriodicAnalysis() {
+        if (captureIntervalId) clearInterval(captureIntervalId);
+        captureIntervalId = setInterval(() => {
+          if (
+            autoAnalysisActive &&
+            activeVideoSource &&
+            videoElement.readyState >= 2
+          ) {
+            captureAndSend();
+          }
+        }, 300);
+      }
+
+      // ---------- EVENTOS E INICIALIZAÇÃO ----------
       startCameraBtn.addEventListener("click", startCamera);
       stopBtn.addEventListener("click", stopAllMedia);
       videoUpload.addEventListener("change", (e) => {
-        if (e.target.files && e.target.files[0]) loadVideoFile(e.target.files[0]);
+        if (e.target.files && e.target.files[0])
+          loadVideoFile(e.target.files[0]);
         e.target.value = null;
       });
       toggleAutoBtn.addEventListener("click", toggleAutoAnalysis);

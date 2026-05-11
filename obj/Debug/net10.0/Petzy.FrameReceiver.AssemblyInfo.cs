@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Petzy.FrameReceiver")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0fbe1a7a1c1270a538ad0f86b4b64f29362a0c43")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a61ed85b7248b38aa5525306371f9cf425dac801")]
 [assembly: System.Reflection.AssemblyProductAttribute("Petzy.FrameReceiver")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Petzy.FrameReceiver")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
